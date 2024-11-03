@@ -1,0 +1,18 @@
+[package]
+name = "bevy_study"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+bevy = { version = "0.14", features = [
+    "bevy_dev_tools",
+    "bevy_ui",
+] }
+
+
+[dependencies]
+bevy = { version = "0.14", features = [
+    "bevy_dev_tools",
+    "bevy_ui",
+] }
+bevy-inspector-egui = "0.27.0"
