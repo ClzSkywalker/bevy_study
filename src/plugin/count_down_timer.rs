@@ -17,6 +17,8 @@ fn count_down_timer(
 ) {
     if !enemy_spawn.is_finished() {
         enemy_spawn.sub(time.delta());
+    }else {
+        enemy_spawn.reset();
     }
 
     for mut ele in query.iter_mut() {

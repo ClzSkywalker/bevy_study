@@ -20,7 +20,7 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CountdownTimer::<EnemySpawn>::new(
             Duration::new(2, 0),
-            Duration::new(2, 0),
+            Duration::new(1, 0),
             true,
         ))
         .add_systems(Update, enemy_spawn);
@@ -47,10 +47,8 @@ fn enemy_spawn(
         }
     };
 
-    let x = generate_random_excluding_range(200, 80) as f32;
-    let y = generate_random_excluding_range(200, 80) as f32;
-
-    let pos = player.translation + Vec3::new(x, y, 0.);
+    let pos = generate_random_excluding_range(150., 50.);
+    let pos = player.translation + Vec3::new(pos.x, pos.y, 0.);
 
     commands.spawn((
         MaterialMesh2dBundle {
@@ -67,11 +65,12 @@ fn enemy_spawn(
     ));
 }
 
-fn generate_random_excluding_range(radio1: i32, radio2: i32) -> i32 {
+fn generate_random_excluding_range(radio1: f32, radio2: f32) -> Vec2 {
     loop {
-        let num = thread_rng().gen_range(-radio1..=radio1);
-        if num < -radio2 || num > radio2 {
-            return num;
+        let x = thread_rng().gen_range(-radio1..=radio1) as f32;
+        let y = thread_rng().gen_range(-radio1..=radio1) as f32;
+        if radio2 <= (x.powf(2.) + y.powf(2.)).sqrt() {
+            return Vec2::new(x, y);
         }
     }
 }
