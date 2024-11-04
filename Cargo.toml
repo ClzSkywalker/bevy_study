@@ -15,4 +15,6 @@ bevy = { version = "0.14", features = [
     "bevy_dev_tools",
     "bevy_ui",
 ] }
+bevy_rapier2d = { version = "0.27", features = [ "simd-stable", "debug-render-2d" ] }
 bevy-inspector-egui = "0.27.0"
+rand = "0.8.5"

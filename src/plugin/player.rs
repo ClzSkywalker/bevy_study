@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{
     app::prelude::*,
     asset::Assets,
@@ -7,7 +9,11 @@ use bevy::{
     utils::default,
 };
 
-use crate::comp::{control::ControlComponent, player::PlayerComponent};
+use crate::comp::{
+    common::{CountdownTimer, BulletCooling},
+    control::ControlComponent,
+    character::PlayerComponent,
+};
 
 pub struct PlayerPlugin;
 
@@ -22,20 +28,15 @@ fn player_shape(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: Mesh2dHandle(meshes.add(Rectangle::new(50., 50.))),
-        material: materials.add(Color::Srgba(css::RED)),
-        transform: Transform::from_xyz(150., 150., 0.),
-        ..default()
-    });
-
     commands.spawn((
         MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Rectangle::new(50., 50.))),
+            mesh: Mesh2dHandle(meshes.add(Rectangle::new(20., 20.))),
             material: materials.add(Color::Srgba(css::ORANGE)),
+            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
             ..default()
         },
         PlayerComponent,
         ControlComponent,
+        CountdownTimer::<BulletCooling>::new(Duration::new(1, 0), Duration::ZERO, false),
     ));
 }

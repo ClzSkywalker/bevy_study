@@ -1,4 +1,4 @@
-pub mod bullet;
+pub mod common;
 pub mod control;
 pub mod movement;
-pub mod player;
+pub mod character;

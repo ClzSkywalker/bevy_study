@@ -1,21 +1,35 @@
+use std::time::Duration;
+
 use bevy::{
     color::palettes::css,
-    input::mouse::MouseMotion,
+    input::{
+        mouse::{self, MouseButtonInput},
+        ButtonState,
+    },
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
+    window::PrimaryWindow,
 };
+use bevy_rapier2d::prelude::*;
 
-use crate::comp::{
-    control::ControlComponent,
-    movement::{Acceleration, MovementBundle, Velocity},
-    player::PlayerComponent,
+use crate::{
+    comp::{
+        character::PlayerComponent,
+        common::{BulletComponent, BulletCooling, CampBlue, CountdownTimer, DeadTimer},
+        control::ControlComponent,
+        movement::{Acceleration, MovementBundle, Velocity},
+    },
+    resource::MouseClickRes,
 };
 
 pub struct ControlPlugin;
 
 impl Plugin for ControlPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (update_control, shut_bullet).chain());
+        app.add_systems(
+            Update,
+            (mouse_click_position, update_control, shut_bullet).chain(),
+        );
     }
 }
 
@@ -48,43 +62,85 @@ fn update_control(
 
 fn shut_bullet(
     mut command: Commands,
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    mouse_motion: EventReader<MouseMotion>,
     player: Query<&Transform, With<PlayerComponent>>,
+    click_pos: Option<Res<MouseClickRes>>,
+    mut shut_count_down: Query<&mut CountdownTimer<BulletCooling>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    // mouse_input.get_just_pressed().last().unwrap().
-    if !mouse_input.just_pressed(MouseButton::Left) {
+    let mut shut_count_down = shut_count_down.single_mut();
+    if shut_count_down.is_finished() {
+        shut_count_down.reset();
+    } else {
         return;
     }
-    println!("click");
+
+    let mouse_input = match click_pos {
+        Some(r) => r,
+        None => {
+            return;
+        }
+    };
+
+    if mouse_input.mouse_button != mouse::MouseButton::Left {
+        return;
+    }
     let palyer = match player.get_single() {
         Ok(r) => r,
         Err(_) => {
             return;
         }
     };
-    println!("palyer");
-    if let Some(pos) = print_mouse_click_position(mouse_motion) {
-        let pos1 = palyer.translation - Vec3::new(pos.x, pos.y, 0.);
-        let pos2 = Transform::from_scale(pos1).forward() * 100.;
-        println!("pos:{:?}", pos2);
-        command.spawn((
-            MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Rectangle::new(50., 50.))),
-                material: materials.add(Color::Srgba(css::RED)),
-                transform: Transform::from_xyz(palyer.translation.x, palyer.translation.y, 0.),
-                ..default()
-            },
-            MovementBundle::new(Velocity::new(pos2), Acceleration::new(Vec3::ZERO)),
-        ));
-    }
+
+    let pos1 = Vec2::new(mouse_input.pos.x, mouse_input.pos.y)
+        - Vec2::new(palyer.translation.x, palyer.translation.y);
+    let pos2 = pos1.normalize() * 100.;
+
+    command.spawn((
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Circle::new(5.))),
+            material: materials.add(Color::Srgba(css::RED)),
+            transform: Transform::from_xyz(palyer.translation.x, palyer.translation.y, 0.),
+            ..default()
+        },
+        BulletComponent::<CampBlue>::default(),
+        CountdownTimer::<DeadTimer>::new(Duration::new(1, 0), Duration::new(1, 0), false),
+        MovementBundle::new(Velocity::new(pos2), Acceleration::new(Vec2::ZERO)),
+        Collider::ball(5.),
+    ));
 }
 
-fn print_mouse_click_position(mut mouse_motion: EventReader<MouseMotion>) -> Option<Vec2> {
-    match mouse_motion.read().last() {
-        Some(r) => Some(r.delta),
-        None => None,
-    }
+fn mouse_click_position(
+    mut command: Commands,
+    mut mouse_button_events: EventReader<MouseButtonInput>, // 监听按下与松开的瞬间事件
+    mut cursor_moved_events: EventReader<CursorMoved>,      // 监听鼠标移动事件
+    mouse_button_input: Res<ButtonInput<MouseButton>>,      // 监听鼠标按键资源
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    let window = match window_query.get_single() {
+        Ok(r) => r,
+        Err(_) => {
+            // 鼠标不在窗口，移除资源
+            command.remove_resource::<MouseClickRes>();
+            return;
+        }
+    };
+
+    // 监听鼠标移动事件
+    if let Some(event) = cursor_moved_events.read().last() {
+        let mut cursor_position = event.position;
+        cursor_position.y -= window.height() / 2.;
+        cursor_position.y = -cursor_position.y;
+        cursor_position.x -= window.width() / 2.;
+        if mouse_button_input.pressed(MouseButton::Left) {
+            command.insert_resource(MouseClickRes::new(cursor_position, MouseButton::Left));
+        }
+    };
+
+    // 监听鼠标按键事件
+    if let Some(event) = mouse_button_events.read().last() {
+        if event.state == ButtonState::Released {
+            command.remove_resource::<MouseClickRes>();
+        }
+    };
 }

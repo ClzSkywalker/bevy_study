@@ -1,8 +1,14 @@
 use bevy::{app::App, prelude::*, DefaultPlugins};
-use plugin::{camera::CameraPlugin, control::ControlPlugin, movement::MovementPlugin, player::PlayerPlugin};
+use common::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use plugin::{
+    camera::CameraPlugin, control::ControlPlugin, count_down_timer::CountdownTimerPlugin,
+    despawn::DespawnPlugin, enemy::EnemyPlugin, movement::MovementPlugin, player::PlayerPlugin,
+};
 
+mod common;
 mod comp;
 mod plugin;
+mod resource;
 
 fn main() {
     // 无头服务器插件，// 每秒运行几帧
@@ -14,10 +20,25 @@ fn main() {
     // .insert_resource(Time::<Fixed>::from_hz(2.)) // 每秒运行2次
 
     App::new()
-        .add_plugins((DefaultPlugins)) // , WorldInspectorPlugin::default()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "My Game".to_string(),
+                resize_constraints: WindowResizeConstraints {
+                    min_width: WINDOW_WIDTH,
+                    min_height: WINDOW_HEIGHT,
+                    max_width: WINDOW_WIDTH,
+                    max_height: WINDOW_HEIGHT,
+                },
+                ..default()
+            }),
+            ..default()
+        })) // , WorldInspectorPlugin::default()
         .add_plugins(CameraPlugin)
+        .add_plugins(CountdownTimerPlugin)
         .add_plugins(PlayerPlugin)
+        .add_plugins(DespawnPlugin)
         .add_plugins(ControlPlugin)
         .add_plugins(MovementPlugin)
+        .add_plugins(EnemyPlugin)
         .run();
 }

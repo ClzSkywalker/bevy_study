@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::comp::player::PlayerComponent;
+use crate::comp::character::PlayerComponent;
 
 pub struct CameraPlugin;
 
@@ -31,13 +31,8 @@ fn update_camera(
     };
     let Vec3 { x, y, .. } = player.translation;
 
-    match camera.get_single_mut() {
-        Ok(mut r) => {
-            let direction = Vec3::new(x, y, 0.);
-            r.translation = r.translation.lerp(direction, 0.5 * time.delta_seconds());
-        }
-        Err(_) => {
-            return;
-        }
+    if let Ok(mut r) = camera.get_single_mut() {
+        let direction = Vec3::new(x, y, 0.);
+        r.translation = r.translation.lerp(direction, 0.5 * time.delta_seconds());
     }
 }
