@@ -1,13 +1,9 @@
 use bevy::{app::App, prelude::*, DefaultPlugins};
-use bevy_rapier2d::{
-    plugin::{NoUserData, RapierPhysicsPlugin},
-    render::RapierDebugRenderPlugin,
-};
 use common::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use plugin::{
     camera::CameraPlugin, collision::CollisionPlugin, control::ControlPlugin,
     count_down_timer::CountdownTimerPlugin, despawn::DespawnPlugin, enemy::EnemyPlugin,
-    movement::MovementPlugin, player::PlayerPlugin,
+    player::PlayerPlugin,
 };
 
 mod common;
@@ -37,18 +33,13 @@ fn main() {
                 ..default()
             }),
             ..default()
-        })) // , WorldInspectorPlugin::default()
-        .add_plugins((
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
-            RapierDebugRenderPlugin::default(),
-        ))
-        .add_plugins(CollisionPlugin)
+        }))
         .add_plugins(CameraPlugin)
         .add_plugins(CountdownTimerPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(DespawnPlugin)
         .add_plugins(ControlPlugin)
-        .add_plugins(MovementPlugin)
         .add_plugins(EnemyPlugin)
+        .add_plugins(CollisionPlugin)
         .run();
 }

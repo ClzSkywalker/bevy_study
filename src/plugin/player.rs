@@ -8,10 +8,10 @@ use bevy::{
     sprite::{ColorMaterial, MaterialMesh2dBundle, Mesh2dHandle},
     utils::default,
 };
-use bevy_rapier2d::prelude::{Collider, CollisionGroups};
+use bevy_rapier2d::prelude::*;
 
 use crate::{
-    common::{player_group, ITEM_GROUP},
+    common::ITEM_GROUP,
     comp::{
         character::PlayerComponent,
         common::{BulletCooling, CountdownTimer},
@@ -45,7 +45,9 @@ fn player_shape(
             CountdownTimer::<BulletCooling>::new(Duration::from_millis(500), Duration::ZERO, false),
         ))
         .insert((
+            RigidBody::Dynamic,
             Collider::cuboid(10., 10.),
-            CollisionGroups::new(player_group(), ITEM_GROUP),
+            Velocity::zero(),
+            CollisionGroups::new(Group::GROUP_1, ITEM_GROUP),
         ));
 }

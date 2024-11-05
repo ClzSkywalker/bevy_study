@@ -19,11 +19,3 @@ pub fn generate_random_excluding_range(radio1: f32, radio2: f32) -> Vec2 {
         }
     }
 }
-
-pub fn player_group() -> Group {
-    Group::GROUP_1 | Group::GROUP_2
-}
-
-pub fn enemy_group() -> Group {
-    Group::GROUP_1 | Group::GROUP_2
-}

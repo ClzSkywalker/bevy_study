@@ -13,12 +13,10 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    common::{player_group, ITEM_GROUP},
     comp::{
         character::PlayerComponent,
         common::{BulletComponent, BulletCooling, CampBlue, CountdownTimer, DeadTimer},
         control::ControlComponent,
-        movement::{Acceleration, MovementBundle, Velocity},
     },
     resource::MouseClickRes,
 };
@@ -92,28 +90,26 @@ fn shut_bullet(
     };
 
     shut_count_down.reset();
-    let pos1 = Vec2::new(mouse_input.pos.x, mouse_input.pos.y)
-        - Vec2::new(palyer.translation.x, palyer.translation.y);
+    let play_pos = Vec2::new(palyer.translation.x, palyer.translation.y);
+    let pos1 = Vec2::new(mouse_input.pos.x, mouse_input.pos.y) - play_pos;
     let pos2 = pos1.normalize() * 100.;
+    let start_pos = play_pos + pos1.normalize() * 30.;
 
     command.spawn((
-        // MaterialMesh2dBundle {
-        //     mesh: Mesh2dHandle(meshes.add(Circle::new(5.))),
-        //     material: materials.add(Color::Srgba(css::BLUE)),
-        //     transform: Transform::from_xyz(palyer.translation.x, palyer.translation.y, 0.),
-        //     ..default()
-        // },
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Circle::new(5.))),
+            material: materials.add(Color::Srgba(css::BLUE)),
+            transform: Transform::from_xyz(start_pos.x, start_pos.y, 0.),
+            ..default()
+        },
         BulletComponent::<CampBlue>::default(),
         CountdownTimer::<DeadTimer>::new(Duration::new(1, 0), Duration::new(1, 0), false),
-        MovementBundle::new(Velocity::new(pos2), Acceleration::new(Vec2::ZERO)),
         Collider::ball(10.),
+        RigidBody::Dynamic,
+        Velocity::linear(pos2),
+        CollidingEntities::default(),
         ActiveEvents::COLLISION_EVENTS,
-        TransformBundle::from_transform(Transform::from_translation(Vec3::new(
-            palyer.translation.x,
-            palyer.translation.y,
-            0.,
-        ))),
-        // CollisionGroups::new(Group::GROUP_1, ITEM_GROUP),
+        CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
     ));
     // .insert((
     //     Collider::ball(5.),
