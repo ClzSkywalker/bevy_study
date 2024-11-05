@@ -55,6 +55,9 @@ impl<T: ICountdownTimer> CountdownTimer<T> {
     }
 
     pub fn sub(&mut self, time: Duration) {
+        if self.is_finished(){
+            return;
+        }
         if self.current <= time {
             self.current = Duration::ZERO;
             return;

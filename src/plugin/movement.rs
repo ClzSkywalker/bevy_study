@@ -16,7 +16,10 @@ fn update_velocity(mut movecomp: Query<(&mut Velocity, &Acceleration)>) {
     }
 }
 
-fn update_position(mut movecomp: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
+fn update_position(
+    mut movecomp: Query<(&mut Transform, &Velocity, &GlobalTransform)>,
+    time: Res<Time>,
+) {
     for mut movecomp in movecomp.iter_mut() {
         movecomp.0.translation += movecomp.1.value.extend(0.) * time.delta_seconds();
     }

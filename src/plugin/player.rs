@@ -8,11 +8,15 @@ use bevy::{
     sprite::{ColorMaterial, MaterialMesh2dBundle, Mesh2dHandle},
     utils::default,
 };
+use bevy_rapier2d::prelude::{Collider, CollisionGroups};
 
-use crate::comp::{
-    common::{CountdownTimer, BulletCooling},
-    control::ControlComponent,
-    character::PlayerComponent,
+use crate::{
+    common::{player_group, ITEM_GROUP},
+    comp::{
+        character::PlayerComponent,
+        common::{BulletCooling, CountdownTimer},
+        control::ControlComponent,
+    },
 };
 
 pub struct PlayerPlugin;
@@ -28,15 +32,20 @@ fn player_shape(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Rectangle::new(20., 20.))),
-            material: materials.add(Color::Srgba(css::ORANGE)),
-            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-            ..default()
-        },
-        PlayerComponent,
-        ControlComponent,
-        CountdownTimer::<BulletCooling>::new(Duration::new(1, 0), Duration::ZERO, false),
-    ));
+    commands
+        .spawn((
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Rectangle::new(20., 20.))),
+                material: materials.add(Color::Srgba(css::BLUE)),
+                transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+                ..default()
+            },
+            PlayerComponent,
+            ControlComponent,
+            CountdownTimer::<BulletCooling>::new(Duration::from_millis(500), Duration::ZERO, false),
+        ))
+        .insert((
+            Collider::cuboid(10., 10.),
+            CollisionGroups::new(player_group(), ITEM_GROUP),
+        ));
 }

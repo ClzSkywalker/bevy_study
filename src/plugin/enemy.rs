@@ -4,9 +4,11 @@ use bevy::color::palettes::css;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use bevy::sprite::Mesh2dHandle;
-use rand::thread_rng;
-use rand::Rng;
+use bevy_rapier2d::prelude::*;
 
+use crate::common::enemy_group;
+use crate::common::generate_random_excluding_range;
+use crate::common::ITEM_GROUP;
 use crate::comp::character::EnemyComponent;
 use crate::comp::character::PlayerComponent;
 use crate::comp::common::{CountdownTimer, EnemySpawn};
@@ -50,27 +52,23 @@ fn enemy_spawn(
     let pos = generate_random_excluding_range(150., 50.);
     let pos = player.translation + Vec3::new(pos.x, pos.y, 0.);
 
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Rectangle::new(20., 20.))),
-            material: materials.add(Color::Srgba(css::ORANGE)),
-            transform: Transform::from_translation(pos),
-            ..default()
-        },
-        EnemyComponent,
-        MovementBundle::new(
-            Velocity::new(Vec2::default()),
-            Acceleration::new(Vec2::default()),
-        ),
-    ));
-}
-
-fn generate_random_excluding_range(radio1: f32, radio2: f32) -> Vec2 {
-    loop {
-        let x = thread_rng().gen_range(-radio1..=radio1) as f32;
-        let y = thread_rng().gen_range(-radio1..=radio1) as f32;
-        if radio2 <= (x.powf(2.) + y.powf(2.)).sqrt() {
-            return Vec2::new(x, y);
-        }
-    }
+    commands
+        .spawn((
+            // MaterialMesh2dBundle {
+            //     mesh: Mesh2dHandle(meshes.add(Circle::new(10.))),
+            //     material: materials.add(Color::Srgba(css::RED)),
+            //     transform: Transform::from_translation(pos),
+            //     ..default()
+            // },
+            EnemyComponent,
+            // MovementBundle::new(
+            //     Velocity::new(Vec2::default()),
+            //     Acceleration::new(Vec2::default()),
+            // ),
+            Collider::cuboid(80.0, 20.0),
+            // Collider::ball(20.),
+            TransformBundle::from_transform( Transform::from_translation(pos)),
+            ActiveEvents::COLLISION_EVENTS,
+        ));
+        // .insert(CollisionGroups::new(enemy_group(), ITEM_GROUP));
 }
