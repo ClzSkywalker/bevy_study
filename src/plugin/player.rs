@@ -36,12 +36,14 @@ fn player_shape(
             },
             PlayerComponent,
             ControlComponent,
+            HealthComponent::new(10),
+            AttackComponent::new(5),
             CountdownTimer::<BulletCooling>::new(Duration::from_millis(500), Duration::ZERO, false),
         ))
         .insert((
+            Collider::cuboid(10., 10.),
             RigidBody::Dynamic,
             GravityScale(0.),
-            Collider::cuboid(10., 10.),
             Velocity::zero(),
             CollisionGroups::new(get_player_group(), get_enemy_group()),
         ));

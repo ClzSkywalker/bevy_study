@@ -4,24 +4,30 @@ use bevy::{
     color::palettes::css,
     input::{
         mouse::{self, MouseButtonInput},
+        touch::touch_screen_input_system,
         ButtonState,
     },
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
-    window::PrimaryWindow,
 };
 use bevy_rapier2d::prelude::*;
 
-use crate::comp::prelude::*;
 use crate::{common::prelude::*, resource::MouseClickRes};
+use crate::{comp::prelude::*, resource::MousePositionRes};
 
 pub struct ControlPlugin;
 
 impl Plugin for ControlPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_resource::<MousePositionRes>().add_systems(
             Update,
-            (mouse_click_position, update_control, shut_bullet).chain(),
+            (
+                touch_screen_input_system,
+                mouse_click_position,
+                update_control,
+                shut_bullet,
+            )
+                .chain(),
         );
     }
 }
@@ -117,7 +123,8 @@ fn mouse_click_position(
     mut command: Commands,
     mut mouse_button_events: EventReader<MouseButtonInput>, // 监听按下与松开的瞬间事件
     mut cursor_moved_events: EventReader<CursorMoved>,      // 监听鼠标移动事件
-    mouse_button_input: Res<ButtonInput<MouseButton>>,      // 监听鼠标按键资源
+    mouse_button_input: Res<ButtonInput<MouseButton>>,      // 鼠标按键资源
+    mouse_pos_res: Res<MousePositionRes>,
     camera: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
 ) {
     let (camera, camera_transform) = camera.single();
@@ -126,6 +133,7 @@ fn mouse_click_position(
     let mut cursor_position = Vec2::ZERO;
     for event in cursor_moved_events.read() {
         cursor_position = event.position;
+        command.insert_resource(MousePositionRes::new(cursor_position));
         if let Some(touch_position) = camera.viewport_to_world_2d(camera_transform, cursor_position)
         {
             if mouse_button_input.pressed(MouseButton::Left) {
@@ -136,10 +144,10 @@ fn mouse_click_position(
     }
 
     // 监听鼠标按键事件
-    if let Some(event) = mouse_button_events.read().last() {
+    if let Some(event) = mouse_button_events.read().next() {
         if event.state == ButtonState::Pressed {
             if let Some(touch_position) =
-                camera.viewport_to_world_2d(camera_transform, cursor_position)
+                camera.viewport_to_world_2d(camera_transform, mouse_pos_res.pos)
             {
                 command.insert_resource(MouseClickRes::new(touch_position, event.button));
                 return;
@@ -148,5 +156,5 @@ fn mouse_click_position(
         if event.state == ButtonState::Released {
             command.remove_resource::<MouseClickRes>();
         }
-    };
+    }
 }
