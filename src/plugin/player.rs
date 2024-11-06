@@ -10,14 +10,8 @@ use bevy::{
 };
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    common::ITEM_GROUP,
-    comp::{
-        character::PlayerComponent,
-        common::{BulletCooling, CountdownTimer},
-        control::ControlComponent,
-    },
-};
+use crate::common::prelude::*;
+use crate::comp::prelude::*;
 
 pub struct PlayerPlugin;
 
@@ -46,8 +40,9 @@ fn player_shape(
         ))
         .insert((
             RigidBody::Dynamic,
+            GravityScale(0.),
             Collider::cuboid(10., 10.),
             Velocity::zero(),
-            CollisionGroups::new(Group::GROUP_1, ITEM_GROUP),
+            CollisionGroups::new(get_player_group(), get_enemy_group()),
         ));
 }

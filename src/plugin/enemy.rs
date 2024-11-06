@@ -6,11 +6,8 @@ use bevy::sprite::MaterialMesh2dBundle;
 use bevy::sprite::Mesh2dHandle;
 use bevy_rapier2d::prelude::*;
 
-use crate::common::generate_random_excluding_range;
-use crate::comp::character::EnemyComponent;
-use crate::comp::character::PlayerComponent;
-use crate::comp::common::{CountdownTimer, EnemySpawn};
-// use crate::comp::movement::Velocity;
+use crate::common::prelude::*;
+use crate::comp::prelude::*;
 
 pub struct EnemyPlugin;
 
@@ -21,9 +18,7 @@ impl Plugin for EnemyPlugin {
             Duration::new(1, 0),
             true,
         ))
-        .add_systems(Update, enemy_spawn);
-        // .add_system(enemy_spawn)
-        // .add_system(enemy_despawn);
+        .add_systems(PostUpdate, enemy_spawn);
     }
 }
 
@@ -48,18 +43,22 @@ fn enemy_spawn(
     let pos = generate_random_excluding_range(150., 50.);
     let pos = player.translation + Vec3::new(pos.x, pos.y, 0.);
 
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Circle::new(10.))),
-            material: materials.add(Color::Srgba(css::RED)),
-            transform: Transform::from_translation(pos),
-            ..default()
-        },  
-        EnemyComponent,
-        Collider::ball(20.),
-        RigidBody::Fixed,
-        CollidingEntities::default(),
-        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
-        // ActiveCollisionTypes::KINEMATIC_STATIC,
-    ));
+    commands
+        .spawn((
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(10.))),
+                material: materials.add(Color::Srgba(css::RED)),
+                transform: Transform::from_translation(pos),
+                ..default()
+            },
+            EnemyComponent,
+            HealthComponent::new(10),
+        ))
+        .insert((
+            Collider::ball(10.),
+            RigidBody::Fixed,
+            CollidingEntities::default(),
+            ActiveEvents::COLLISION_EVENTS,
+            CollisionGroups::new(get_enemy_group(), get_player_group()),
+        ));
 }

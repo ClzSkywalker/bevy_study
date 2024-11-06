@@ -20,6 +20,8 @@ fn main() {
     // .insert_resource(Time::<Virtual>::from_max_delta(Duration::from_secs(2)))
     // .insert_resource(Time::<Fixed>::from_hz(2.)) // 每秒运行2次
 
+    common::camp::init_camp();
+
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -37,9 +39,9 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(CountdownTimerPlugin)
         .add_plugins(PlayerPlugin)
-        .add_plugins(DespawnPlugin)
         .add_plugins(ControlPlugin)
         .add_plugins(EnemyPlugin)
         .add_plugins(CollisionPlugin)
+        .add_plugins(DespawnPlugin)
         .run();
 }

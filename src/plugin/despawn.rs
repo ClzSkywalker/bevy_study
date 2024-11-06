@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::comp::common::{CountdownTimer, DeadTimer};
+use crate::comp::prelude::*;
 
 pub struct DespawnPlugin;
 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::comp::character::PlayerComponent;
+use crate::comp::prelude::*;
 
 pub struct CameraPlugin;
 

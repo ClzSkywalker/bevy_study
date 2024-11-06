@@ -12,14 +12,8 @@ use bevy::{
 };
 use bevy_rapier2d::prelude::*;
 
-use crate::{
-    comp::{
-        character::PlayerComponent,
-        common::{BulletComponent, BulletCooling, CampBlue, CountdownTimer, DeadTimer},
-        control::ControlComponent,
-    },
-    resource::MouseClickRes,
-};
+use crate::comp::prelude::*;
+use crate::{common::prelude::*, resource::MouseClickRes};
 
 pub struct ControlPlugin;
 
@@ -95,26 +89,28 @@ fn shut_bullet(
     let pos2 = pos1.normalize() * 100.;
     let start_pos = play_pos + pos1.normalize() * 30.;
 
-    command.spawn((
-        MaterialMesh2dBundle {
-            mesh: Mesh2dHandle(meshes.add(Circle::new(5.))),
-            material: materials.add(Color::Srgba(css::BLUE)),
-            transform: Transform::from_xyz(start_pos.x, start_pos.y, 0.),
-            ..default()
-        },
-        BulletComponent::<CampBlue>::default(),
-        CountdownTimer::<DeadTimer>::new(Duration::new(1, 0), Duration::new(1, 0), false),
-        Collider::ball(10.),
-        RigidBody::Dynamic,
-        Velocity::linear(pos2),
-        CollidingEntities::default(),
-        ActiveEvents::COLLISION_EVENTS,
-        CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
-    ));
-    // .insert((
-    //     Collider::ball(5.),
-    //     CollisionGroups::new(player_group(), ITEM_GROUP),
-    // ));
+    command
+        .spawn((
+            MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Circle::new(5.))),
+                material: materials.add(Color::Srgba(css::BLUE)),
+                transform: Transform::from_xyz(start_pos.x, start_pos.y, 0.),
+                ..default()
+            },
+            BulletComponent::<CampBlue>::default(),
+            AttackComponent::new(5),
+            CountdownTimer::<DeadTimer>::new(Duration::new(1, 0), Duration::new(1, 0), false),
+        ))
+        .insert((
+            Collider::ball(5.),
+            RigidBody::Dynamic,
+            // 设置重力
+            GravityScale(0.),
+            Velocity::linear(pos2),
+            CollidingEntities::default(),
+            ActiveEvents::COLLISION_EVENTS,
+            CollisionGroups::new(get_player_group(), get_enemy_group()),
+        ));
 }
 
 fn mouse_click_position(
@@ -122,43 +118,32 @@ fn mouse_click_position(
     mut mouse_button_events: EventReader<MouseButtonInput>, // 监听按下与松开的瞬间事件
     mut cursor_moved_events: EventReader<CursorMoved>,      // 监听鼠标移动事件
     mouse_button_input: Res<ButtonInput<MouseButton>>,      // 监听鼠标按键资源
-    window_query: Query<&Window, With<PrimaryWindow>>,
+    camera: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
 ) {
-    let window = match window_query.get_single() {
-        Ok(r) => r,
-        Err(_) => {
-            // 鼠标不在窗口，移除资源
-            command.remove_resource::<MouseClickRes>();
-            return;
-        }
-    };
+    let (camera, camera_transform) = camera.single();
 
     // 监听鼠标移动事件
-    if let Some(event) = cursor_moved_events.read().last() {
-        let mut cursor_position = event.position;
-        cursor_position.y -= window.height() / 2.;
-        cursor_position.y = -cursor_position.y;
-        cursor_position.x -= window.width() / 2.;
-        if mouse_button_input.pressed(MouseButton::Left) {
-            command.insert_resource(MouseClickRes::new(cursor_position, MouseButton::Left));
-            return;
+    let mut cursor_position = Vec2::ZERO;
+    for event in cursor_moved_events.read() {
+        cursor_position = event.position;
+        if let Some(touch_position) = camera.viewport_to_world_2d(camera_transform, cursor_position)
+        {
+            if mouse_button_input.pressed(MouseButton::Left) {
+                command.insert_resource(MouseClickRes::new(touch_position, MouseButton::Left));
+                return;
+            }
         }
-    };
+    }
 
-    let mut cursor_position = match window.cursor_position() {
-        Some(r) => r,
-        None => {
-            return;
-        }
-    };
-    cursor_position.y -= window.height() / 2.;
-    cursor_position.y = -cursor_position.y;
-    cursor_position.x -= window.width() / 2.;
     // 监听鼠标按键事件
     if let Some(event) = mouse_button_events.read().last() {
         if event.state == ButtonState::Pressed {
-            command.insert_resource(MouseClickRes::new(cursor_position, event.button));
-            return;
+            if let Some(touch_position) =
+                camera.viewport_to_world_2d(camera_transform, cursor_position)
+            {
+                command.insert_resource(MouseClickRes::new(touch_position, event.button));
+                return;
+            }
         }
         if event.state == ButtonState::Released {
             command.remove_resource::<MouseClickRes>();
