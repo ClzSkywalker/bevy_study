@@ -23,6 +23,7 @@ fn despawn_item(
 
     for (entity, comp) in health_check.iter() {
         if comp.is_dead() {
+            println!("dead,{:?}", entity);
             command.entity(entity).despawn();
         }
     }

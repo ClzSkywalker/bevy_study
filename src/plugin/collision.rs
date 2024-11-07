@@ -11,7 +11,17 @@ impl Plugin for CollisionPlugin {
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
         ))
+        .add_systems(Update, update_velocity)
         .add_systems(PostUpdate, collision);
+    }
+}
+
+fn update_velocity(mut query: Query<(&mut Velocity, &SpeedComponent)>) {
+    for (mut velocity, speed) in query.iter_mut() {
+        if velocity.linvel == Vec2::ZERO {
+            continue;
+        }
+        velocity.linvel = velocity.linvel.normalize() * speed.speed();
     }
 }
 
@@ -27,9 +37,8 @@ fn collision(
                 println!("attach none entity");
                 return;
             }
-            for (source, attack_entity, target) in attack_entitys {
+            for (_, attack_entity, target) in attack_entitys {
                 if let Ok(mut health_entity) = health.get_mut(target) {
-                    println!("attack entity: {:?}, target entity: {:?}", source, target);
                     if health_entity.is_dead() {
                         continue;
                     }

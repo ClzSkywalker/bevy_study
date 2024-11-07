@@ -38,6 +38,7 @@ fn player_shape(
             ControlComponent,
             HealthComponent::new(10),
             AttackComponent::new(5),
+            SpeedComponent::new(100.),
             CountdownTimer::<BulletCooling>::new(Duration::from_millis(500), Duration::ZERO, false),
         ))
         .insert((

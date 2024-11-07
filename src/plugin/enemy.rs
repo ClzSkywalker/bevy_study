@@ -53,10 +53,11 @@ fn enemy_spawn(
             },
             EnemyComponent,
             HealthComponent::new(10),
+            SpeedComponent::new(50.)
         ))
         .insert((
             Collider::ball(10.),
-            RigidBody::Dynamic,
+            RigidBody::KinematicVelocityBased,
             GravityScale(0.),
             Velocity::zero(),
             CollidingEntities::default(),

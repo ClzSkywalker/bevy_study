@@ -39,3 +39,16 @@ impl AttackComponent {
         self.0
     }
 }
+
+#[derive(Component, Debug, Default)]
+pub struct SpeedComponent(f32);
+
+impl SpeedComponent {
+    pub fn new(speed: f32) -> Self {
+        Self(speed)
+    }
+
+    pub fn speed(&self) -> f32 {
+        self.0
+    }
+}

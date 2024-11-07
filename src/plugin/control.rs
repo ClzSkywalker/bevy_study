@@ -33,10 +33,9 @@ impl Plugin for ControlPlugin {
 }
 
 fn update_control(
-    mut query: Query<&mut Velocity, With<PlayerComponent>>,
+    mut query: Query<(&mut Velocity, &SpeedComponent), With<PlayerComponent>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    let speed = 100.0;
     let mut direction = Vec2::default();
     if keyboard_input.pressed(KeyCode::ArrowLeft) {
         direction.x -= 1.;
@@ -53,8 +52,8 @@ fn update_control(
     if keyboard_input.pressed(KeyCode::ArrowDown) {
         direction.y -= 1.;
     }
-    for mut transform in query.iter_mut() {
-        transform.linvel = direction * speed;
+    for (mut velocity, speed) in query.iter_mut() {
+        velocity.linvel = direction * speed.speed();
     }
 }
 
@@ -96,7 +95,6 @@ fn shut_bullet(
     shut_count_down.reset();
     let play_pos = Vec2::new(palyer.translation.x, palyer.translation.y);
     let pos1 = Vec2::new(mouse_input.pos.x, mouse_input.pos.y) - play_pos;
-    let pos2 = pos1.normalize() * 100.;
     let start_pos = play_pos + pos1.normalize() * 30.;
 
     command
@@ -109,6 +107,7 @@ fn shut_bullet(
             },
             BulletComponent::<CampBlue>::default(),
             AttackComponent::new(5),
+            SpeedComponent::new(100.),
             CountdownTimer::<DeadTimer>::new(Duration::new(1, 0), Duration::new(1, 0), false),
         ))
         .insert((
@@ -116,7 +115,7 @@ fn shut_bullet(
             RigidBody::Dynamic,
             // 设置重力
             GravityScale(0.),
-            Velocity::linear(pos2),
+            Velocity::linear(pos1.normalize()),
             CollidingEntities::default(),
             ActiveEvents::COLLISION_EVENTS,
             CollisionGroups::new(get_player_group(), get_enemy_group()),
