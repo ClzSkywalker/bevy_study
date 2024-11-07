@@ -12,9 +12,9 @@ pub fn init_camp() {
 }
 
 pub fn get_player_group() -> Group {
-    PLAYER_GROUP.get().unwrap().clone()
+    *PLAYER_GROUP.get().unwrap()
 }
 
 pub fn get_enemy_group() -> Group {
-    ENEMY_GROUP.get().unwrap().clone()
+    *ENEMY_GROUP.get().unwrap()
 }

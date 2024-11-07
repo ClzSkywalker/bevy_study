@@ -33,12 +33,11 @@ impl Plugin for ControlPlugin {
 }
 
 fn update_control(
-    mut query: Query<&mut Transform, With<ControlComponent>>,
+    mut query: Query<&mut Velocity, With<PlayerComponent>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>,
 ) {
-    let speed = 100.0 * time.delta_seconds();
-    let mut direction = Vec3::ZERO;
+    let speed = 100.0;
+    let mut direction = Vec2::default();
     if keyboard_input.pressed(KeyCode::ArrowLeft) {
         direction.x -= 1.;
     }
@@ -55,7 +54,7 @@ fn update_control(
         direction.y -= 1.;
     }
     for mut transform in query.iter_mut() {
-        transform.translation += direction * speed;
+        transform.linvel = direction * speed;
     }
 }
 
@@ -67,7 +66,12 @@ fn shut_bullet(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut shut_count_down = shut_count_down.single_mut();
+    let mut shut_count_down = match shut_count_down.get_single_mut() {
+        Ok(r) => r,
+        Err(_) => {
+            return;
+        }
+    };
     if !shut_count_down.is_finished() {
         return;
     }
@@ -130,11 +134,9 @@ fn mouse_click_position(
     let (camera, camera_transform) = camera.single();
 
     // 监听鼠标移动事件
-    let mut cursor_position = Vec2::ZERO;
     for event in cursor_moved_events.read() {
-        cursor_position = event.position;
-        command.insert_resource(MousePositionRes::new(cursor_position));
-        if let Some(touch_position) = camera.viewport_to_world_2d(camera_transform, cursor_position)
+        command.insert_resource(MousePositionRes::new(event.position));
+        if let Some(touch_position) = camera.viewport_to_world_2d(camera_transform, event.position)
         {
             if mouse_button_input.pressed(MouseButton::Left) {
                 command.insert_resource(MouseClickRes::new(touch_position, MouseButton::Left));

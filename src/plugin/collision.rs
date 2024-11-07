@@ -1,5 +1,5 @@
-use bevy::{ecs::entity, prelude::*};
-use bevy_rapier2d::{prelude::*, rapier::prelude::CollisionEventFlags};
+use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::comp::prelude::*;
 
@@ -21,64 +21,37 @@ fn collision(
     mut health: Query<&mut HealthComponent>,
 ) {
     for event in collision_events.read() {
-        match event {
-            CollisionEvent::Started(entity1, entity2, _) => {
-                let attack_entity =
-                    match find_eneity(&attack, vec![entity1.clone(), entity2.clone()]) {
-                        Some(r) => r,
-                        None => {
-                            println!("attach none entity");
-                            return;
-                        }
-                    };
-
-                let mut health_entitys =
-                    match health.get_many_mut([entity1.clone(), entity2.clone()]) {
-                        Ok(r) => r,
-                        Err(e) => {
-                            println!("health1 none entity {:?}", e);
-                            return;
-                        }
-                    };
-
-                let health_entity = match health_entitys.first_mut() {
-                    Some(r) => r,
-                    None => {
-                        println!("health2 none entity");
-                        return;
-                    }
-                };
-
-                health_entity.damage(attack_entity.attack());
+        if let CollisionEvent::Started(entity1, entity2, _) = event {
+            let attack_entitys = find_eneity(&attack, [*entity1, *entity2]);
+            if attack_entitys.is_empty() {
+                println!("attach none entity");
+                return;
             }
-            _ => {}
+            for (source, attack_entity, target) in attack_entitys {
+                if let Ok(mut health_entity) = health.get_mut(target) {
+                    println!("attack entity: {:?}, target entity: {:?}", source, target);
+                    if health_entity.is_dead() {
+                        continue;
+                    }
+                    health_entity.damage(attack_entity.attack());
+                }
+            }
         }
     }
 }
 
-fn find_eneity<'a, T>(attack: &'a Query<&T>, entity: Vec<Entity>) -> Option<&'a T>
+/// 查找相互作用的 entity
+/// 触发者, 组件, 被触发者
+fn find_eneity<'a, T>(query: &'a Query<&T>, entitys: [Entity; 2]) -> Vec<(Entity, &'a T, Entity)>
 where
     T: Component,
 {
-    for entity in entity {
-        if let Ok(r) = attack.get(entity) {
-            return Some(r);
+    let mut res = Vec::new();
+    for (index, entity) in entitys.iter().enumerate() {
+        let target = if index == 0 { entitys[1] } else { entitys[0] };
+        if let Ok(r) = query.get(*entity) {
+            res.push((*entity, r, target));
         }
     }
-    None
+    res
 }
-
-// fn find_entity_mut<'a, T, const N: usize>(
-//     mut attack: &'a mut Query<&mut T>,
-//     entity: [Entity; N],
-// ) -> Option<&'a mut T>
-// where
-//     T: Component,
-// {
-//     if let Ok(r) = attack.get_many_mut(entity) {
-//         if let Some(r) = r.first() {
-//             return Some(r.);
-//         }
-//     }
-//     None
-// }

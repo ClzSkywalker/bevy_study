@@ -1,5 +1,5 @@
 use bevy::{app::App, prelude::*, DefaultPlugins};
-use common::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use common::prelude::*;
 use plugin::{
     camera::CameraPlugin, collision::CollisionPlugin, control::ControlPlugin,
     count_down_timer::CountdownTimerPlugin, despawn::DespawnPlugin, enemy::EnemyPlugin,

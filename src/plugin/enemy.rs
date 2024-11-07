@@ -56,7 +56,9 @@ fn enemy_spawn(
         ))
         .insert((
             Collider::ball(10.),
-            RigidBody::Fixed,
+            RigidBody::Dynamic,
+            GravityScale(0.),
+            Velocity::zero(),
             CollidingEntities::default(),
             ActiveEvents::COLLISION_EVENTS,
             CollisionGroups::new(get_enemy_group(), get_player_group()),
